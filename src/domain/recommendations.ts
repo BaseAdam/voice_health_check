@@ -12,6 +12,8 @@ export type HabitCategory =
 
 export type Habit = {
   category: HabitCategory;
+  /** Short name for day summaries. */
+  label: string;
   foods: string[];
   /** Check-in question, gender-neutral. */
   question: string;
@@ -40,6 +42,7 @@ export const SUPPLEMENT_NOTE =
 
 const IRON_HABIT: Habit = {
   category: 'iron_food',
+  label: 'produkty bogate w żelazo',
   foods: ['soczewica', 'ciecierzyca', 'fasola', 'chuda wołowina', 'natka pietruszki', 'pestki dyni'],
   question: 'Czy udało Ci się dziś zjeść coś bogatego w żelazo, na przykład strączki albo chude mięso?',
   yesText:
@@ -51,6 +54,7 @@ const IRON_HABIT: Habit = {
 
 export const VIT_D_SUPPLEMENT_HABIT: Habit = {
   category: 'vit_d_supplement',
+  label: 'suplement witaminy D',
   foods: [],
   question: 'Czy udało Ci się dziś przyjąć suplement witaminy D?',
   yesText: 'Dobrze! Przy suplementacji liczy się regularność.',
@@ -66,6 +70,7 @@ export const RECOMMENDATIONS: Record<MarkerId, Partial<Record<Direction, Recomme
         'Niski poziom witaminy D jest w Polsce częsty, zwłaszcza od jesieni do wiosny. Witamina D wspiera kości, mięśnie i odporność.',
       habit: {
         category: 'vit_d_food',
+        label: 'tłusta ryba lub jajka',
         foods: ['łosoś', 'makrela', 'śledź', 'sardynki', 'jaja'],
         question: 'Czy udało Ci się dziś zjeść tłustą rybę albo jajka?',
         yesText: 'Świetnie! Tłuste ryby i jajka to jedne z niewielu naturalnych źródeł witaminy D.',
@@ -105,6 +110,7 @@ export const RECOMMENDATIONS: Record<MarkerId, Partial<Record<Direction, Recomme
         'Witamina B12 jest potrzebna do tworzenia krwinek i pracy układu nerwowego. Występuje głównie w produktach odzwierzęcych.',
       habit: {
         category: 'b12_food',
+        label: 'produkty z witaminą B12',
         foods: ['ryby', 'jaja', 'jogurt naturalny', 'ser', 'mięso'],
         question: 'Czy udało Ci się dziś zjeść jajka, rybę albo nabiał?',
         yesText: 'Świetnie! Regularne porcje takich produktów pomagają utrzymać poziom witaminy B12.',
@@ -122,6 +128,7 @@ export const RECOMMENDATIONS: Record<MarkerId, Partial<Record<Direction, Recomme
         'Podwyższony cholesterol LDL zwiększa ryzyko chorób serca. Pomaga błonnik rozpuszczalny i ograniczenie tłuszczów nasyconych.',
       habit: {
         category: 'fiber',
+        label: 'posiłek z błonnikiem',
         foods: ['płatki owsiane', 'soczewica', 'fasola', 'jabłka', 'orzechy'],
         question: 'Czy udało Ci się dziś zjeść owsiankę albo inny posiłek bogaty w błonnik?',
         yesText: 'Brawo! Błonnik z owsa i strączków pomaga obniżać cholesterol LDL.',
@@ -139,6 +146,7 @@ export const RECOMMENDATIONS: Record<MarkerId, Partial<Record<Direction, Recomme
         'Glukoza na czczo powyżej normy może oznaczać zaburzenia gospodarki cukrowej. Omów wynik z lekarzem – pomaga też dieta bogata w warzywa i pełne ziarno.',
       habit: {
         category: 'vegetables',
+        label: 'warzywa do posiłków',
         foods: ['warzywa', 'kasza gryczana', 'pieczywo pełnoziarniste', 'rośliny strączkowe'],
         question: 'Czy udało Ci się dziś dodać warzywa do każdego głównego posiłku?',
         yesText: 'Świetnie! Warzywa i błonnik spowalniają wchłanianie cukru.',

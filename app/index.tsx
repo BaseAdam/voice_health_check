@@ -12,6 +12,7 @@ export default function Home() {
           <Link href="/plan">Twój plan</Link>
           <Link href="/results">Edytuj wyniki</Link>
           <Link href="/checkin">Rozpocznij check-in</Link>
+          <Link href="/summary">Podsumowanie dnia</Link>
         </>
       ) : (
         <Link href="/results">Wpisz wyniki</Link>

@@ -55,16 +55,18 @@ app/_layout.tsx     Stack (czeka na hydrację store), handler/listener notyfikac
 app/index.tsx       menu: plan / edycja wyników / check-in / ustawienia; bez wyników CTA „Wpisz wyniki”
 app/results.tsx     formularz wyników (płeć, wartości, edytowalne normy, data badania, dane demo)
 app/plan.tsx        notka z evaluate(): disclaimer, poza normą, co jeść, nawyki + pory; „Odsłuchaj”
-app/checkin.tsx     głosowy check-in (push-to-talk)
-app/summary.tsx     podsumowanie dnia
+app/checkin.tsx     głosowy check-in: efekty maszyny stanów (speak/nagranie/STT/LLM), push-to-talk TAP start/stop, fallbacki Tak/Nie, Pomiń
+app/summary.tsx     podgląd stanu nawyków na dziś (tylko odczyt)
 app/settings.tsx    klucze API + godziny przypomnień
 src/domain/markers.ts          markery, jednostki, zakresy referencyjne (zależne od płci)
 src/domain/recommendations.ts  wyjaśnienia, produkty, pytania, teksty tak/nie, pora, kategoria nawyku
 src/domain/evaluate.ts         evaluate(): statusy markerów + max 4 nawyki (priorytet wg odchylenia)
 src/domain/evaluate.test.ts    testy jest
 src/domain/speech.ts           planSpeech(): tekst notki do odsłuchu (bez liczb i jednostek)
+src/domain/checkin.ts          teksty check-inu (potwierdzenia, dopytanie, podsumowanie dnia), wieczór od 18:00
+src/checkin.ts      reducer maszyny stanów check-inu (czysty TS, `step` odrzuca spóźnione wyniki async)
 src/format.ts       parsowanie/formatowanie liczb (przecinek), zakresów i dat
-src/store.ts        zustand + persist (wyniki badań, tylko zmienione normy; NIE klucze API)
+src/store.ts        zustand + persist (wyniki badań, tylko zmienione normy, odpowiedzi z DZIŚ; NIE klucze API)
 src/api.ts          klucze (secure-store/.env, useApiKeys()), testy połączenia
 src/services/llm.ts         interpretAnswer(): Groq, Structured Outputs strict + zod, nigdy nie rzuca
 src/services/elevenlabs.ts  speak() (TTS + cache po hashu, resolve po końcu odtwarzania), stopSpeaking(), transcribe() (Scribe)
