@@ -2,7 +2,7 @@
 Zadanie rekrutacyjne (1–2h). Aplikacja mobilna: głos jako interfejs do codziennego check-inu zdrowotnego.
 
 ## Stack
-React Native + Expo SDK 58 (TypeScript, expo-router), działa w Expo Go na fizycznym telefonie.
+React Native + Expo SDK 57 (TypeScript, expo-router), działa w Expo Go na fizycznym telefonie.
 ElevenLabs: STT (scribe_v2, pl) + TTS (eleven_flash_v2_5). Groq (API zgodne z OpenAI, openai/gpt-oss-120b, json_schema strict).
 expo-audio (NIE expo-av), expo-file-system (nowe API File/Paths, nie /legacy), expo-notifications (tylko lokalne),
 expo-secure-store, zustand + persist w AsyncStorage.
@@ -30,12 +30,21 @@ automatyczne wykrywanie końca mowy.
 ## Gotchas
 - iOS: przy `allowsRecording: true` odtwarzanie leci przez słuchawkę rozmowną – `setAudioModeAsync({ allowsRecording: true })`
   tuż przed nagraniem, `false` przed odtworzeniem TTS.
-- Expo Go ze sklepu obsługuje tylko najnowsze SDK – trzymamy SDK 58.
+- Expo Go z App Store obsługuje JEDNO SDK i po premierze nowego SDK jest kilka tygodni w tyle. Stan 2026-10-21: sklep = SDK 57
+  (SDK 58 wyszło 15.10, Expo Go 58 w sklepie „w ciągu kilku tygodni”) → trzymamy SDK 57. Sprawdzenie: `expoGoSdkVersion`
+  w https://api.expo.dev/v2/versions/latest. Zmiana SDK: `npx expo install expo@~<wersja> --fix`, potem
+  `npx expo install --dev jest-expo jest @types/jest eslint-config-expo @types/react typescript`, a na koniec CZYSTA
+  instalacja (`rm -rf node_modules package-lock.json && npm install`) – przyrostowo npm zagnieździł `expo-modules-core`.
+- `expo-audio` ma peer `expo-asset: "*"` – npm dociąga najnowszą (z innego SDK) i bundle pada na `expo/internal/...`.
+  Dlatego `expo-asset` jest przypięty bezpośrednio (`npx expo install expo-asset`).
 - Android w Expo Go: brak `SCHEDULE_EXACT_ALARM`, przypomnienia DAILY mogą się spóźnić o kilka minut (akceptujemy).
 - TTS zwraca binarne mp3: `fetch` z `expo/fetch` → `arrayBuffer()` → `await new File(Paths.cache, …).write(new Uint8Array(buf))`
-  (w SDK 58 `File.write()` jest ASYNC – zwraca Promise).
+  (SDK 57: `File.write()` synchroniczne, SDK 58: zwraca Promise – kod robi `await`, działa w obu).
   Fallback: endpoint `/with-timestamps` (JSON z `audio_base64`).
 - STT upload: RN `FormData` z `{ uri, name: 'a.m4a', type: 'audio/m4a' }`.
+- `react-dom` jest zainstalowany tylko jako peer dependency (konflikt ERESOLVE przy instalacji ESLint) – przez to Expo
+  uznaje projekt za webowy. Dlatego `app.json` ma `"platforms": ["ios", "android"]`; bez tego przeglądarka / klawisz `w`
+  kończą się „Unable to resolve react-native-web”.
 - Jest: `expo-audio` nie ma mocka w jest-expo – w testach importujących go `jest.mock('expo-audio', () => ({}))`.
 - TypeScript 6: domyślnie `types: []` – globalne typy (np. jest) trzeba dopisać w `tsconfig.json` → `compilerOptions.types`.
 

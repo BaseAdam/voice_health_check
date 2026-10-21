@@ -18,14 +18,16 @@
       },
       "predictiveBackGestureEnabled": false
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
     "scheme": "voicehealthcheck",
     "plugins": [
       "expo-router",
       "expo-audio",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-asset"
+    ],
+    "platforms": [
+      "ios",
+      "android"
     ]
   }
 }
