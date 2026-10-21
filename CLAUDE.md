@@ -32,9 +32,11 @@ automatyczne wykrywanie końca mowy.
   tuż przed nagraniem, `false` przed odtworzeniem TTS.
 - Expo Go ze sklepu obsługuje tylko najnowsze SDK – trzymamy SDK 58.
 - Android w Expo Go: brak `SCHEDULE_EXACT_ALARM`, przypomnienia DAILY mogą się spóźnić o kilka minut (akceptujemy).
-- TTS zwraca binarne mp3: `fetch` z `expo/fetch` → `arrayBuffer()` → `new File(Paths.cache, …).write(new Uint8Array(buf))`.
+- TTS zwraca binarne mp3: `fetch` z `expo/fetch` → `arrayBuffer()` → `await new File(Paths.cache, …).write(new Uint8Array(buf))`
+  (w SDK 58 `File.write()` jest ASYNC – zwraca Promise).
   Fallback: endpoint `/with-timestamps` (JSON z `audio_base64`).
 - STT upload: RN `FormData` z `{ uri, name: 'a.m4a', type: 'audio/m4a' }`.
+- Jest: `expo-audio` nie ma mocka w jest-expo – w testach importujących go `jest.mock('expo-audio', () => ({}))`.
 - TypeScript 6: domyślnie `types: []` – globalne typy (np. jest) trzeba dopisać w `tsconfig.json` → `compilerOptions.types`.
 
 ## Struktura
@@ -50,9 +52,12 @@ src/domain/markers.ts          markery, jednostki, zakresy referencyjne (zależn
 src/domain/recommendations.ts  wyjaśnienia, produkty, pytania, teksty tak/nie, pora, kategoria nawyku
 src/domain/evaluate.ts         evaluate(): statusy markerów + max 4 nawyki (priorytet wg odchylenia)
 src/domain/evaluate.test.ts    testy jest
+src/domain/speech.ts           planSpeech(): tekst notki do odsłuchu (bez liczb i jednostek)
 src/format.ts       parsowanie/formatowanie liczb (przecinek), zakresów i dat
 src/store.ts        zustand + persist (wyniki badań, tylko zmienione normy; NIE klucze API)
-src/api.ts          klucze (secure-store/.env, useApiKeys()), testy połączenia, stt(), tts(), interpret()
+src/api.ts          klucze (secure-store/.env, useApiKeys()), testy połączenia, interpret()
+src/services/elevenlabs.ts  speak() (TTS + cache po hashu, resolve po końcu odtwarzania), stopSpeaking(), transcribe() (Scribe)
+src/services/recorder.ts    useRecorder(): push-to-talk, uprawnienia, tryb audio iOS, limit 30 s
 src/reminders.ts    expo-notifications
 ```
 

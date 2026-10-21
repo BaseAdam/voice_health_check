@@ -1,12 +1,21 @@
-import { Link, router } from 'expo-router';
+import { Link, router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useApiKeys } from '../src/api';
 import { evaluate, type Status } from '../src/domain/evaluate';
 import { DISCLAIMER, REMINDER_TIME_LABELS } from '../src/domain/recommendations';
+import { planSpeech } from '../src/domain/speech';
 import { formatDate, formatDecimal, formatRange } from '../src/format';
+import { speak, stopSpeaking } from '../src/services/elevenlabs';
 import { useStore } from '../src/store';
 
 export default function Plan() {
   const results = useStore((s) => s.results);
+  const { keys } = useApiKeys();
+  const [speaking, setSpeaking] = useState(false);
+  const [speechError, setSpeechError] = useState('');
+  // Leaving the screen stops the reading.
+  useFocusEffect(useCallback(() => stopSpeaking, []));
 
   if (!results) {
     return (
@@ -18,7 +27,8 @@ export default function Plan() {
   }
 
   // The season rule uses today, not the test date: the check-in is daily.
-  const { statuses, habits } = evaluate(results.values, results.sex, new Date(), results.ranges);
+  const evaluation = evaluate(results.values, results.sex, new Date(), results.ranges);
+  const { statuses, habits } = evaluation;
   const abnormal = statuses.filter((s) => s.status === 'low' || s.status === 'high');
   const withFoods = abnormal.filter((s) => s.recommendation?.habit);
   const names = (status: Status) =>
@@ -28,6 +38,19 @@ export default function Plan() {
       .join(', ');
   const normal = names('normal');
   const missing = names('missing');
+
+  async function listen() {
+    if (speaking) return stopSpeaking();
+    setSpeechError('');
+    setSpeaking(true);
+    try {
+      await speak(planSpeech(evaluation));
+    } catch (e) {
+      setSpeechError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSpeaking(false);
+    }
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.screen}>
@@ -81,8 +104,15 @@ export default function Plan() {
       {normal ? <Text>W normie: {normal}</Text> : null}
       {missing ? <Text style={styles.muted}>Brak wyniku: {missing}</Text> : null}
 
-      {/* TTS comes in the next step. */}
-      <Button title="Odsłuchaj" disabled onPress={() => {}} />
+      {keys && !keys.elevenlabs.value ? (
+        <View style={styles.card}>
+          <Text>Do odsłuchu potrzebny jest klucz ElevenLabs.</Text>
+          <Link href="/settings">Przejdź do ustawień</Link>
+        </View>
+      ) : (
+        <Button title={speaking ? 'Zatrzymaj' : 'Odsłuchaj'} onPress={listen} disabled={!keys} />
+      )}
+      {speechError ? <Text style={styles.error}>{speechError}</Text> : null}
       {habits.length > 0 ? (
         <Button title="Rozpocznij check-in" onPress={() => router.push('/checkin')} />
       ) : null}
@@ -98,4 +128,5 @@ const styles = StyleSheet.create({
   bold: { fontWeight: '600' },
   muted: { color: '#666' },
   note: { color: '#663c00' },
+  error: { color: '#c62828' },
 });
