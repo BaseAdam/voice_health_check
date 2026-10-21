@@ -23,15 +23,41 @@ export function hash(text: string): string {
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
 }
 
-/** ElevenLabs error → Polish message. Error body: { detail: { status | code, message } }. */
+/** `detail.message` (or string `detail`) from an ElevenLabs error body, if any. */
+function apiMessage(body: string): string | undefined {
+  try {
+    const detail = JSON.parse(body)?.detail;
+    const text = typeof detail === 'string' ? detail : detail?.message;
+    return typeof text === 'string' && text ? text : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * ElevenLabs error → Polish message (https://elevenlabs.io/docs/eleven-api/resources/errors).
+ * Error body: { detail: { code | status, message } }; the API message is appended where it helps diagnose.
+ */
 export function errorMessage(status: number, body: string): string {
+  const api = apiMessage(body);
+  const suffix = api ? ` (${api})` : '';
   if (status === 401) {
     if (body.includes('quota_exceeded')) return 'Wyczerpany miesięczny limit ElevenLabs.';
     if (body.includes('missing_permissions')) return 'Klucz ElevenLabs nie ma wymaganych uprawnień.';
     return 'Nieprawidłowy klucz ElevenLabs.';
   }
+  if (status === 402) {
+    if (body.includes('insufficient_credits')) {
+      return 'Za mało kredytów ElevenLabs na tę operację – sprawdź saldo w panelu ElevenLabs.';
+    }
+    // Voice Library voices with a credit multiplier are not available on the free plan.
+    if (/free users/i.test(body)) {
+      return 'Ten głos nie jest dostępny na darmowym planie ElevenLabs – wpisz inny voice ID w Ustawieniach.';
+    }
+    return `Ta operacja wymaga płatnego planu ElevenLabs${suffix}.`;
+  }
   if (status === 429) return 'Za dużo zapytań do ElevenLabs – spróbuj za chwilę.';
-  return `Błąd ElevenLabs (HTTP ${status}).`;
+  return `Błąd ElevenLabs (HTTP ${status})${suffix}.`;
 }
 
 type HttpResponse = { ok: boolean; status: number; text(): Promise<string> };
