@@ -16,10 +16,11 @@ PDF/OCR, push z serwera, konta/backend/sync, wykresy historii, rozmowa real-time
 automatyczne wykrywanie końca mowy.
 
 ## Zasady
-- Treści medyczne (normy, zalecenia, pytania, wskazówki) są DETERMINISTYCZNE – tylko z `src/rules.ts`.
+- Treści medyczne (normy, zalecenia, pytania, wskazówki) są DETERMINISTYCZNE – tylko z `src/domain/` (czysty TS, bez Reacta).
 - LLM wyłącznie interpretuje transkrypcję odpowiedzi → JSON `{ answer: "yes"|"no"|"unclear", note }`. Nie generuje porad.
 - Wskazówka po odpowiedzi i podsumowanie dnia = deterministyczne teksty z reguł.
-- Żadnych dawek leków/suplementów. Suplement tylko jako przypomnienie o zaleceniu lekarza (nazwa wpisana przez użytkownika).
+- Żadnych dawek leków/suplementów. Suplementy diety można polecać, ale ZAWSZE z notką „skonsultuj z lekarzem lub
+  farmaceutą i przeczytaj ulotkę” (`SUPPLEMENT_NOTE`).
 - Disclaimer „nie zastępuje konsultacji z lekarzem” na notce i podsumowaniu.
 - Klucze API: wpisywane w aplikacji (expo-secure-store), fallback `.env` (`EXPO_PUBLIC_*`, tylko dev – trafia do bundla).
   Nic nie hardkodowane, `.env` w .gitignore, commitujemy tylko `.env.example`.
@@ -34,6 +35,7 @@ automatyczne wykrywanie końca mowy.
 - TTS zwraca binarne mp3: `fetch` z `expo/fetch` → `arrayBuffer()` → `new File(Paths.cache, …).write(new Uint8Array(buf))`.
   Fallback: endpoint `/with-timestamps` (JSON z `audio_base64`).
 - STT upload: RN `FormData` z `{ uri, name: 'a.m4a', type: 'audio/m4a' }`.
+- TypeScript 6: domyślnie `types: []` – globalne typy (np. jest) trzeba dopisać w `tsconfig.json` → `compilerOptions.types`.
 
 ## Struktura
 ```
@@ -43,16 +45,19 @@ app/results.tsx     formularz wyników (płeć, wartości, opcjonalny suplement 
 app/checkin.tsx     głosowy check-in (push-to-talk)
 app/summary.tsx     podsumowanie dnia
 app/settings.tsx    klucze API + godziny przypomnień
-src/rules.ts        markery, normy, zalecenia, pytania, wskazówki + evaluate()/pickQuestions()
-src/rules.check.ts  assert-owy self-check
+src/domain/markers.ts          markery, jednostki, zakresy referencyjne (zależne od płci)
+src/domain/recommendations.ts  wyjaśnienia, produkty, pytania, teksty tak/nie, pora, kategoria nawyku
+src/domain/evaluate.ts         evaluate(): statusy markerów + max 4 nawyki (priorytet wg odchylenia)
+src/domain/evaluate.test.ts    testy jest
 src/store.ts        zustand + persist
-src/api.ts          klucze (secure-store/.env), stt(), tts(), interpret()
+src/api.ts          klucze (secure-store/.env, useApiKeys()), testy połączenia, stt(), tts(), interpret()
 src/reminders.ts    expo-notifications
 ```
 
 ## Komendy
 ```
 npx expo start              # Expo Go
-npx tsc --noEmit
-npx tsx src/rules.check.ts
+npm run typecheck
+npm run lint
+npm test                    # jest (preset jest-expo)
 ```
