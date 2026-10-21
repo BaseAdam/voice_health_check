@@ -60,6 +60,17 @@ describe('wartości graniczne', () => {
   });
 });
 
+describe('własne zakresy', () => {
+  it('custom range overrides the default and is reported back', () => {
+    const { statuses } = evaluate({ vitD: 25, ldl: 120 }, 'female', JULY, { vitD: { min: 20, max: 80 } });
+    const byId = Object.fromEntries(statuses.map((s) => [s.marker.id, s]));
+    expect(byId.vitD.status).toBe('normal');
+    expect(byId.vitD.range).toEqual({ min: 20, max: 80 });
+    expect(byId.ldl.status).toBe('high'); // not overridden → default range
+    expect(byId.ldl.range).toEqual({ max: 115 });
+  });
+});
+
 describe('brak danych', () => {
   it('no results → all missing, no habits, no supplement even in season', () => {
     expect(Object.values(statusOf({}))).toEqual(Array(6).fill('missing'));

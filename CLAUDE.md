@@ -39,9 +39,10 @@ automatyczne wykrywanie końca mowy.
 
 ## Struktura
 ```
-app/_layout.tsx     Stack + handler/listener notyfikacji
-app/index.tsx       notka z zaleceniami albo CTA „Wpisz wyniki”; start check-inu
-app/results.tsx     formularz wyników (płeć, wartości)
+app/_layout.tsx     Stack (czeka na hydrację store), handler/listener notyfikacji
+app/index.tsx       menu: plan / edycja wyników / check-in / ustawienia; bez wyników CTA „Wpisz wyniki”
+app/results.tsx     formularz wyników (płeć, wartości, edytowalne normy, data badania, dane demo)
+app/plan.tsx        notka z evaluate(): disclaimer, poza normą, co jeść, nawyki + pory; „Odsłuchaj”
 app/checkin.tsx     głosowy check-in (push-to-talk)
 app/summary.tsx     podsumowanie dnia
 app/settings.tsx    klucze API + godziny przypomnień
@@ -49,7 +50,8 @@ src/domain/markers.ts          markery, jednostki, zakresy referencyjne (zależn
 src/domain/recommendations.ts  wyjaśnienia, produkty, pytania, teksty tak/nie, pora, kategoria nawyku
 src/domain/evaluate.ts         evaluate(): statusy markerów + max 4 nawyki (priorytet wg odchylenia)
 src/domain/evaluate.test.ts    testy jest
-src/store.ts        zustand + persist
+src/format.ts       parsowanie/formatowanie liczb (przecinek), zakresów i dat
+src/store.ts        zustand + persist (wyniki badań, tylko zmienione normy; NIE klucze API)
 src/api.ts          klucze (secure-store/.env, useApiKeys()), testy połączenia, stt(), tts(), interpret()
 src/reminders.ts    expo-notifications
 ```

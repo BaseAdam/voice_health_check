@@ -27,6 +27,12 @@ export type Habit = {
 /** No habit = diet is not the answer for this direction; the explanation sends the user to a doctor. */
 export type Recommendation = { explanation: string; habit?: Habit };
 
+export const DISCLAIMER = 'Aplikacja nie zastępuje konsultacji z lekarzem.';
+export const REMINDER_TIME_LABELS: Record<ReminderTime, string> = {
+  morning: 'rano',
+  lunch: 'obiad',
+  evening: 'wieczór',
+};
 export const SUPPLEMENT_NOTE =
   'Suplementację skonsultuj z lekarzem lub farmaceutą i przeczytaj ulotkę.';
 
