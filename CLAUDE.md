@@ -17,7 +17,8 @@ automatyczne wykrywanie końca mowy.
 
 ## Zasady
 - Treści medyczne (normy, zalecenia, pytania, wskazówki) są DETERMINISTYCZNE – tylko z `src/domain/` (czysty TS, bez Reacta).
-- LLM wyłącznie interpretuje transkrypcję odpowiedzi → JSON `{ answer: "yes"|"no"|"unclear", note }`. Nie generuje porad.
+- LLM wyłącznie interpretuje transkrypcję odpowiedzi → JSON `{ answer: "yes"|"no"|"unclear", detail? }` (walidacja zod).
+  Nie generuje porad. Każdy błąd (klucz, sieć, timeout, HTTP, JSON, schemat) → `unclear`.
 - Wskazówka po odpowiedzi i podsumowanie dnia = deterministyczne teksty z reguł.
 - Żadnych dawek leków/suplementów. Suplementy diety można polecać, ale ZAWSZE z notką „skonsultuj z lekarzem lub
   farmaceutą i przeczytaj ulotkę” (`SUPPLEMENT_NOTE`).
@@ -64,7 +65,8 @@ src/domain/evaluate.test.ts    testy jest
 src/domain/speech.ts           planSpeech(): tekst notki do odsłuchu (bez liczb i jednostek)
 src/format.ts       parsowanie/formatowanie liczb (przecinek), zakresów i dat
 src/store.ts        zustand + persist (wyniki badań, tylko zmienione normy; NIE klucze API)
-src/api.ts          klucze (secure-store/.env, useApiKeys()), testy połączenia, interpret()
+src/api.ts          klucze (secure-store/.env, useApiKeys()), testy połączenia
+src/services/llm.ts         interpretAnswer(): Groq, Structured Outputs strict + zod, nigdy nie rzuca
 src/services/elevenlabs.ts  speak() (TTS + cache po hashu, resolve po końcu odtwarzania), stopSpeaking(), transcribe() (Scribe)
 src/services/recorder.ts    useRecorder(): push-to-talk, uprawnienia, tryb audio iOS, limit 30 s
 src/reminders.ts    expo-notifications
