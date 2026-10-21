@@ -77,9 +77,9 @@ describe('brak danych', () => {
 });
 
 describe('sezon witaminy D', () => {
-  it('low vitamin D in season → supplement habit first, with consultation note', () => {
+  it('low vitamin D in season → supplement only (replaces food habit), with consultation note', () => {
     const { habits } = evaluate({ vitD: 20 }, 'female', JANUARY);
-    expect(habits.map((h) => h.category)).toEqual(['vit_d_supplement', 'vit_d_food']);
+    expect(habits.map((h) => h.category)).toEqual(['vit_d_supplement']);
     expect(habits[0].note).toBe(SUPPLEMENT_NOTE);
   });
 
@@ -101,7 +101,8 @@ describe('priorytet i limit', () => {
   it(`max ${MAX_HABITS} habits, supplement first, then by deviation, iron once`, () => {
     // Deviations: glucose 0.52, ferritin 0.47, Hb 0.17, LDL 0.30, B12 0.25, vitD 0.33
     const all: Results = { vitD: 20, ferritin: 8, hemoglobin: 10, b12: 150, ldl: 150, glucose: 150 };
-    expect(categories(all, JANUARY)).toEqual(['vit_d_supplement', 'vegetables', 'iron_food', 'vit_d_food']);
+    expect(categories(all, JANUARY)).toEqual(['vit_d_supplement', 'vegetables', 'iron_food', 'fiber']);
+    expect(categories(all, JULY)).toEqual(['vegetables', 'iron_food', 'vit_d_food', 'fiber']);
   });
 });
 

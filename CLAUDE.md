@@ -41,7 +41,7 @@ automatyczne wykrywanie końca mowy.
 ```
 app/_layout.tsx     Stack + handler/listener notyfikacji
 app/index.tsx       notka z zaleceniami albo CTA „Wpisz wyniki”; start check-inu
-app/results.tsx     formularz wyników (płeć, wartości, opcjonalny suplement od lekarza)
+app/results.tsx     formularz wyników (płeć, wartości)
 app/checkin.tsx     głosowy check-in (push-to-talk)
 app/summary.tsx     podsumowanie dnia
 app/settings.tsx    klucze API + godziny przypomnień

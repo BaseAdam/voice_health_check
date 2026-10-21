@@ -46,6 +46,7 @@ export function evaluate(results: Results, sex: Sex, date: Date): Evaluation {
   const vitD = statuses.find((s) => s.marker.id === 'vitD');
   if (vitD?.status === 'low' && VIT_D_SEASON_MONTHS.includes(date.getMonth() + 1)) {
     habits.push(VIT_D_SUPPLEMENT_HABIT);
+    seen.add('vit_d_food'); // in season the supplement replaces the vitamin D food habit
   }
   for (const s of [...statuses].sort((a, b) => b.deviation - a.deviation)) {
     const habit = s.recommendation?.habit;
