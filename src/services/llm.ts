@@ -1,9 +1,7 @@
 import { z } from 'zod';
-import { loadKeys } from '../api';
+import { GROQ_MODEL, loadKeys } from '../api';
 import type { Habit } from '../domain/recommendations';
 
-// https://console.groq.com/docs/models – supports strict Structured Outputs (constrained decoding).
-export const LLM_MODEL = 'openai/gpt-oss-120b';
 const URL = 'https://api.groq.com/openai/v1/chat/completions';
 const TIMEOUT_MS = 10_000;
 const MAX_DETAIL = 60;
@@ -77,7 +75,7 @@ export async function interpretAnswer(
       headers: { Authorization: `Bearer ${groq.value}`, 'Content-Type': 'application/json' },
       signal: controller.signal,
       body: JSON.stringify({
-        model: LLM_MODEL,
+        model: GROQ_MODEL,
         temperature: 0,
         reasoning_effort: 'low',
         include_reasoning: false,

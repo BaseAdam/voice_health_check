@@ -1,9 +1,9 @@
 import { loadKeys } from '../api';
 import { RECOMMENDATIONS } from '../domain/recommendations';
-import { interpretAnswer, LLM_MODEL } from './llm';
+import { interpretAnswer } from './llm';
 
-// api.ts pulls in expo-router / secure-store; only loadKeys is needed here.
-jest.mock('../api', () => ({ loadKeys: jest.fn() }));
+// api.ts pulls in expo-router / secure-store; only loadKeys and the model name are needed here.
+jest.mock('../api', () => ({ loadKeys: jest.fn(), GROQ_MODEL: 'test-model' }));
 
 const habit = RECOMMENDATIONS.ldl.high!.habit!;
 const QUESTION = habit.question;
@@ -32,7 +32,7 @@ it('sends a strict json_schema request with the transcript as data and parses th
   expect(url).toBe('https://api.groq.com/openai/v1/chat/completions');
   expect(init.headers.Authorization).toBe('Bearer gsk_test');
   const body = JSON.parse(init.body);
-  expect(body.model).toBe(LLM_MODEL);
+  expect(body.model).toBe('test-model');
   expect(body.response_format.type).toBe('json_schema');
   expect(body.response_format.json_schema.strict).toBe(true);
   expect(body.messages[1].content).toContain('"zjadłem jabłko"');

@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useCallback, useState } from 'react';
 
 export const DEFAULT_VOICE_ID = 'pNInz6obpgDQGcFmaJgB';
+// https://console.groq.com/docs/models – supports strict Structured Outputs (constrained decoding).
 export const GROQ_MODEL = 'openai/gpt-oss-120b';
 
 export type KeyName = 'elevenlabs' | 'groq' | 'voiceId';

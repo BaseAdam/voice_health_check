@@ -55,7 +55,7 @@ async function schedule() {
 
 let queue = Promise.resolve();
 /** Replaces scheduled reminders with a fresh plan. Calls run one at a time, so they never duplicate. */
-export function syncReminders(): Promise<void> {
+function syncReminders(): Promise<void> {
   queue = queue.then(schedule).catch((e) => console.warn('Reminder sync failed', e));
   return queue;
 }

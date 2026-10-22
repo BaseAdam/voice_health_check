@@ -25,6 +25,8 @@ automatyczne wykrywanie końca mowy.
 - Disclaimer „nie zastępuje konsultacji z lekarzem” na notce i podsumowaniu.
 - Klucze API: wpisywane w aplikacji (expo-secure-store), fallback `.env` (`EXPO_PUBLIC_*`, tylko dev – trafia do bundla).
   Nic nie hardkodowane, `.env` w .gitignore, commitujemy tylko `.env.example`.
+- Expo CLI zapisuje wartości z `.env` otwartym tekstem do `.expo/dev/logs/start.log` (ignorowany przez git). Projekt
+  udostępniamy tylko przez git, nigdy jako spakowany folder; do recenzji klucze wpisujemy w Ustawieniach, `.env` pusty.
 - UI i głos po polsku, pytania w formie neutralnej płciowo („Czy udało Ci się dziś…”).
 - Prostota ponad abstrakcje. Stan: jeden store zustand + persist. Notka liczona z wyników, nie przechowywana.
 
