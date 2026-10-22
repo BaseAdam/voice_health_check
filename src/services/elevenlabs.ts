@@ -66,7 +66,9 @@ async function call<R extends HttpResponse>(send: () => Promise<R>): Promise<R> 
   let res: R;
   try {
     res = await send();
-  } catch {
+  } catch (e) {
+    // Not always the network (it hid an unsupported upload body) – keep the real cause in the log.
+    console.warn('[elevenlabs] request failed', e);
     throw new Error(NETWORK_ERROR);
   }
   if (!res.ok) throw new Error(errorMessage(res.status, await res.text().catch(() => '')));
@@ -113,6 +115,8 @@ export function stopSpeaking() {
   if (!current) return;
   const { player, done } = current;
   current = null;
+  // remove() only drops expo-audio's registry entry (iOS and Android) – the sound would keep playing.
+  player.pause();
   player.remove();
   done();
 }
@@ -153,11 +157,11 @@ export async function transcribe(fileUri: string): Promise<string> {
   form.append('model_id', STT_MODEL);
   form.append('language_code', 'pl');
   form.append('tag_audio_events', 'false');
-  // React Native FormData file part.
-  form.append('file', { uri: fileUri, name: 'a.m4a', type: 'audio/m4a' } as unknown as Blob);
+  // expo/fetch (also the global fetch in SDK 57) rejects React Native's { uri } parts; a File is sent as bytes.
+  form.append('file', new File(fileUri));
 
   const res = await call(() =>
-    fetch(`${BASE_URL}/speech-to-text`, { method: 'POST', headers: { 'xi-api-key': apiKey }, body: form }),
+    expoFetch(`${BASE_URL}/speech-to-text`, { method: 'POST', headers: { 'xi-api-key': apiKey }, body: form }),
   );
   const body = await res.json().catch(() => null);
   const text = typeof body?.text === 'string' ? body.text.trim() : '';

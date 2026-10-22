@@ -47,7 +47,10 @@ automatyczne wykrywanie końca mowy.
 - TTS zwraca binarne mp3: `fetch` z `expo/fetch` → `arrayBuffer()` → `await new File(Paths.cache, …).write(new Uint8Array(buf))`
   (SDK 57: `File.write()` synchroniczne, SDK 58: zwraca Promise – kod robi `await`, działa w obu).
   Fallback: endpoint `/with-timestamps` (JSON z `audio_base64`).
-- STT upload: RN `FormData` z `{ uri, name: 'a.m4a', type: 'audio/m4a' }`.
+- STT upload: globalny `fetch` w SDK 57 to `expo/fetch`, który NIE obsługuje części `{ uri, name, type }` z RN `FormData`
+  (rzuca „Unsupported FormDataPart implementation” – wyglądało jak brak internetu). Plik dajemy jako `new File(uri)`
+  z expo-file-system (`bytes()`, `name`, `type`). W jest łatka FormData Expo jest zaślepiona – test używa `requireActual`.
+- expo-audio: `player.remove()` tylko usuwa playera z rejestru (iOS i Android), dźwięk gra dalej – najpierw `pause()`.
 - `react-dom` jest zainstalowany tylko jako peer dependency (konflikt ERESOLVE przy instalacji ESLint) – przez to Expo
   uznaje projekt za webowy. Dlatego `app.json` ma `"platforms": ["ios", "android"]`; bez tego przeglądarka / klawisz `w`
   kończą się „Unable to resolve react-native-web”.
