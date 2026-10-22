@@ -5,7 +5,8 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { answersFor, type DayLog, type YesNo } from './domain/checkin';
 import type { CustomRanges, Results } from './domain/evaluate';
 import type { Sex } from './domain/markers';
-import type { HabitCategory } from './domain/recommendations';
+import type { HabitCategory, ReminderTime } from './domain/recommendations';
+import { DEFAULT_REMINDERS, type ReminderSettings, type ReminderSlot } from './domain/reminders';
 import { toISODate } from './format';
 
 export type LabResults = {
@@ -24,6 +25,11 @@ type State = {
   setResults: (results: LabResults) => void;
   /** Saved right after each answer, so an interrupted check-in keeps its progress. */
   setAnswer: (category: HabitCategory, answer: YesNo) => void;
+  reminders: ReminderSettings;
+  setReminder: (slot: ReminderTime, patch: Partial<ReminderSlot>) => void;
+  /** The "enable reminders?" card on /plan is shown once. */
+  remindersAsked: boolean;
+  setRemindersAsked: () => void;
 };
 
 // API keys never go here – they live in expo-secure-store (src/api.ts).
@@ -38,6 +44,11 @@ export const useStore = create<State>()(
           const date = toISODate(new Date());
           return { today: { date, answers: { ...answersFor(s.today, date), [category]: answer } } };
         }),
+      reminders: DEFAULT_REMINDERS,
+      setReminder: (slot, patch) =>
+        set((s) => ({ reminders: { ...s.reminders, [slot]: { ...s.reminders[slot], ...patch } } })),
+      remindersAsked: false,
+      setRemindersAsked: () => set({ remindersAsked: true }),
     }),
     { name: 'voice-health-check', version: 1, storage: createJSONStorage(() => AsyncStorage) },
   ),

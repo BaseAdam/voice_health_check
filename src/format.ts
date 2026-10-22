@@ -34,3 +34,11 @@ export function isValidTestDate(text: string, today: Date): boolean {
 
 /** YYYY-MM-DD → DD.MM.YYYY */
 export const formatDate = (iso: string) => iso.split('-').reverse().join('.');
+
+/** "dziś 13:00" / "jutro 09:00" / "24.10.2026 09:00" */
+export function formatWhen(date: Date, now: Date): string {
+  const day = toISODate(date);
+  const tomorrow = toISODate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+  const label = day === toISODate(now) ? 'dziś' : day === tomorrow ? 'jutro' : formatDate(day);
+  return `${label} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

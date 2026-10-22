@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Linking, ScrollView, Text, TextInput, View } from 'react-native';
+import { Button, Linking, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import {
   KEY_LABELS,
   deleteKey,
@@ -11,8 +11,12 @@ import {
   type KeySource,
   type TestResult,
 } from '../src/api';
+import { REMINDER_TIME_LABELS, type ReminderTime } from '../src/domain/recommendations';
+import { REMINDER_SLOTS, parseTime } from '../src/domain/reminders';
+import { scheduleTestReminder, useNotificationPermission } from '../src/reminders';
 import { speak, transcribe } from '../src/services/elevenlabs';
 import { MAX_RECORDING_SECONDS, useRecorder } from '../src/services/recorder';
+import { useStore } from '../src/store';
 
 type Provider = 'elevenlabs' | 'groq';
 
@@ -165,10 +169,82 @@ export default function Settings() {
         </View>
       ) : null}
 
+      <Reminders />
+
       <Text style={{ color: '#666' }}>
         Klucze są zapisywane w bezpiecznym magazynie urządzenia. Bez klucza w ustawieniach
         aplikacja używa wartości z .env (tylko do developmentu).
       </Text>
     </ScrollView>
+  );
+}
+
+const inputStyle = { borderWidth: 1, borderRadius: 6, padding: 10, width: 80 } as const;
+
+function Reminders() {
+  const reminders = useStore((s) => s.reminders);
+  const setReminder = useStore((s) => s.setReminder);
+  const { granted, enable } = useNotificationPermission();
+  // Drafts let the user type freely; only a valid HH:MM reaches the store (and reschedules).
+  const [drafts, setDrafts] = useState(() =>
+    Object.fromEntries(REMINDER_SLOTS.map((slot) => [slot, reminders[slot].time])) as Record<ReminderTime, string>,
+  );
+  const [denied, setDenied] = useState(false);
+  const [testStatus, setTestStatus] = useState('');
+  const invalid = REMINDER_SLOTS.some((slot) => !parseTime(drafts[slot]));
+
+  function editTime(slot: ReminderTime, text: string) {
+    setDrafts((d) => ({ ...d, [slot]: text }));
+    if (parseTime(text)) setReminder(slot, { time: text.trim() });
+  }
+
+  async function test() {
+    const ok = await scheduleTestReminder();
+    setDenied(!ok);
+    setTestStatus(ok ? 'Przypomnienie pojawi się za 10 s.' : '');
+  }
+
+  return (
+    <View style={{ gap: 12 }}>
+      <Text style={{ fontSize: 18, fontWeight: '600' }}>Przypomnienia</Text>
+      {granted === false ? (
+        <Button title="Włącz powiadomienia" onPress={async () => setDenied(!(await enable()))} />
+      ) : null}
+      {denied && !granted ? (
+        <View style={{ gap: 6 }}>
+          <Text style={{ color: '#c62828' }}>
+            Brak zgody na powiadomienia. Włącz je w ustawieniach systemu.
+          </Text>
+          <Button title="Otwórz ustawienia" onPress={() => Linking.openSettings()} />
+        </View>
+      ) : null}
+      {REMINDER_SLOTS.map((slot) => (
+        <View key={slot} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={{ flex: 1, textTransform: 'capitalize' }}>{REMINDER_TIME_LABELS[slot]}</Text>
+          <TextInput
+            accessibilityLabel={`Godzina przypomnienia: ${REMINDER_TIME_LABELS[slot]}`}
+            value={drafts[slot]}
+            onChangeText={(text) => editTime(slot, text)}
+            placeholder="GG:MM"
+            keyboardType="numbers-and-punctuation"
+            style={{ ...inputStyle, borderColor: parseTime(drafts[slot]) ? '#ccc' : '#c62828' }}
+          />
+          <Switch
+            accessibilityLabel={`Przypomnienie: ${REMINDER_TIME_LABELS[slot]}`}
+            value={reminders[slot].enabled}
+            onValueChange={(enabled) => setReminder(slot, { enabled })}
+          />
+        </View>
+      ))}
+      {invalid ? (
+        <Text style={{ color: '#c62828' }}>Wpisz godzinę w formacie GG:MM, na przykład 9:30.</Text>
+      ) : null}
+      <Text style={{ color: '#666' }}>
+        Przypomnienie dotyczy nawyku, którego jeszcze nie odhaczono. Gdy wszystko jest odhaczone, nie
+        pojawia się.
+      </Text>
+      <Button title="Przypomnienie testowe za 10 s" onPress={test} />
+      {testStatus ? <Text>{testStatus}</Text> : null}
+    </View>
   );
 }

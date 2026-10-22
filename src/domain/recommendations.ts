@@ -21,6 +21,8 @@ export type Habit = {
   yesText: string;
   /** Tip for the rest of the day, said after "no". */
   noTip: string;
+  /** Local notification body; fits any time of day. */
+  reminder: string;
   time: ReminderTime;
   /** Mandatory for supplements. */
   note?: string;
@@ -49,6 +51,7 @@ const IRON_HABIT: Habit = {
     'Dobrze! Żelazo lepiej się wchłania, gdy do posiłku dodasz warzywa bogate w witaminę C, na przykład paprykę.',
   noTip:
     'Do kolacji dodaj pastę z ciecierzycy albo garść pestek dyni i paprykę – witamina C pomaga wchłaniać żelazo.',
+  reminder: 'Dziś warto zjeść coś bogatego w żelazo, na przykład strączki albo chude mięso.',
   time: 'lunch',
 };
 
@@ -59,6 +62,7 @@ export const VIT_D_SUPPLEMENT_HABIT: Habit = {
   question: 'Czy udało Ci się dziś przyjąć suplement witaminy D?',
   yesText: 'Dobrze! Przy suplementacji liczy się regularność.',
   noTip: 'Witamina D rozpuszcza się w tłuszczach, więc najlepiej przyjmować ją z posiłkiem.',
+  reminder: 'Pamiętaj o suplemencie witaminy D – najlepiej z posiłkiem.',
   time: 'morning',
   note: SUPPLEMENT_NOTE,
 };
@@ -75,6 +79,7 @@ export const RECOMMENDATIONS: Record<MarkerId, Partial<Record<Direction, Recomme
         question: 'Czy udało Ci się dziś zjeść tłustą rybę albo jajka?',
         yesText: 'Świetnie! Tłuste ryby i jajka to jedne z niewielu naturalnych źródeł witaminy D.',
         noTip: 'Na kolację możesz zjeść jajko albo kanapkę z makrelą lub śledziem.',
+        reminder: 'Dziś warto zjeść tłustą rybę albo jajka – to naturalne źródła witaminy D.',
         time: 'lunch',
       },
     },
@@ -115,6 +120,7 @@ export const RECOMMENDATIONS: Record<MarkerId, Partial<Record<Direction, Recomme
         question: 'Czy udało Ci się dziś zjeść jajka, rybę albo nabiał?',
         yesText: 'Świetnie! Regularne porcje takich produktów pomagają utrzymać poziom witaminy B12.',
         noTip: 'Na kolację wybierz jajko, rybę albo jogurt naturalny.',
+        reminder: 'Dziś warto zjeść jajka, rybę albo nabiał – to źródła witaminy B12.',
         time: 'morning',
       },
     },
@@ -133,6 +139,7 @@ export const RECOMMENDATIONS: Record<MarkerId, Partial<Record<Direction, Recomme
         question: 'Czy udało Ci się dziś zjeść owsiankę albo inny posiłek bogaty w błonnik?',
         yesText: 'Brawo! Błonnik z owsa i strączków pomaga obniżać cholesterol LDL.',
         noTip: 'Do kolacji dodaj porcję strączków albo zjedz jabłko i garść orzechów.',
+        reminder: 'Dziś warto zjeść owsiankę albo inny posiłek bogaty w błonnik.',
         time: 'morning',
       },
     },
@@ -151,6 +158,7 @@ export const RECOMMENDATIONS: Record<MarkerId, Partial<Record<Direction, Recomme
         question: 'Czy udało Ci się dziś dodać warzywa do każdego głównego posiłku?',
         yesText: 'Świetnie! Warzywa i błonnik spowalniają wchłanianie cukru.',
         noTip: 'Kolację zacznij od porcji warzyw, a słodycze zamień na owoc albo orzechy.',
+        reminder: 'Dodaj warzywa do najbliższego posiłku.',
         time: 'lunch',
       },
     },

@@ -6,11 +6,15 @@ import { evaluate, type Status } from '../src/domain/evaluate';
 import { DISCLAIMER, REMINDER_TIME_LABELS } from '../src/domain/recommendations';
 import { planSpeech } from '../src/domain/speech';
 import { formatDate, formatDecimal, formatRange } from '../src/format';
+import { useNotificationPermission } from '../src/reminders';
 import { speak, stopSpeaking } from '../src/services/elevenlabs';
 import { useStore } from '../src/store';
 
 export default function Plan() {
   const results = useStore((s) => s.results);
+  const remindersAsked = useStore((s) => s.remindersAsked);
+  const setRemindersAsked = useStore((s) => s.setRemindersAsked);
+  const notifications = useNotificationPermission();
   const { keys } = useApiKeys();
   const [speaking, setSpeaking] = useState(false);
   const [speechError, setSpeechError] = useState('');
@@ -99,6 +103,25 @@ export default function Plan() {
             </View>
           ))}
         </>
+      ) : null}
+
+      {/* Asked once, after the plan exists – not at app start. */}
+      {habits.length > 0 && !remindersAsked && notifications.granted === false ? (
+        <View style={styles.card}>
+          <Text style={styles.bold}>Włączyć przypomnienia w ciągu dnia?</Text>
+          <Text>
+            Rano, przed obiadem i wieczorem przypomnimy o nawyku, którego jeszcze nie odhaczono. Godziny
+            zmienisz w ustawieniach.
+          </Text>
+          <Button
+            title="Włącz"
+            onPress={() => {
+              setRemindersAsked();
+              notifications.enable();
+            }}
+          />
+          <Button title="Nie teraz" onPress={setRemindersAsked} />
+        </View>
       ) : null}
 
       {normal ? <Text>W normie: {normal}</Text> : null}

@@ -1,4 +1,4 @@
-import { formatRange, isValidTestDate, parseDecimal, toISODate } from './format';
+import { formatRange, formatWhen, isValidTestDate, parseDecimal, toISODate } from './format';
 
 describe('parseDecimal', () => {
   it('empty → no value', () => {
@@ -41,4 +41,11 @@ it('formatRange handles one-sided ranges', () => {
   expect(formatRange({ min: 12, max: 16.5 }, 'g/dl')).toBe('12–16,5 g/dl');
   expect(formatRange({ max: 115 }, 'mg/dl')).toBe('≤ 115 mg/dl');
   expect(formatRange({}, 'mg/dl')).toBe('brak zakresu');
+});
+
+it('formatWhen: today, tomorrow (across month end), later', () => {
+  const now = new Date(2026, 9, 31, 20, 0);
+  expect(formatWhen(new Date(2026, 9, 31, 21, 5), now)).toBe('dziś 21:05');
+  expect(formatWhen(new Date(2026, 10, 1, 9, 0), now)).toBe('jutro 09:00');
+  expect(formatWhen(new Date(2026, 10, 2, 9, 0), now)).toBe('02.11.2026 09:00');
 });
