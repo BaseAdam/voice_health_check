@@ -70,7 +70,8 @@ app/results.tsx     formularz wyników (płeć, wartości, edytowalne normy, dat
 app/plan.tsx        notka z evaluate(): disclaimer, poza normą, co jeść, nawyki + pory; „Odsłuchaj”; karta zgody na przypomnienia (raz)
 app/checkin.tsx     głosowy check-in: efekty maszyny stanów (speak/nagranie/STT/LLM), push-to-talk TAP start/stop, fallbacki Tak/Nie, Pomiń
 app/summary.tsx     podgląd stanu nawyków na dziś (tylko odczyt)
-app/settings.tsx    klucze API, test głosu, przypomnienia (GG:MM + przełącznik na porę, zgoda, test za 10 s)
+app/settings.tsx    klucze API, test głosu, przypomnienia (GG:MM + przełącznik na porę, zgoda, test za 10 s),
+                    „Wyczyść dzisiejsze odpowiedzi” (do testów)
 src/domain/markers.ts          markery, jednostki, zakresy referencyjne (zależne od płci)
 src/domain/recommendations.ts  wyjaśnienia, produkty, pytania, teksty tak/nie i przypomnienia, pora, kategoria nawyku
 src/domain/evaluate.ts         evaluate(): statusy markerów + max 4 nawyki (priorytet wg odchylenia)

@@ -25,6 +25,8 @@ type State = {
   setResults: (results: LabResults) => void;
   /** Saved right after each answer, so an interrupted check-in keeps its progress. */
   setAnswer: (category: HabitCategory, answer: YesNo) => void;
+  /** Testing aid (Ustawienia): the next check-in asks about every habit again. */
+  clearToday: () => void;
   reminders: ReminderSettings;
   setReminder: (slot: ReminderTime, patch: Partial<ReminderSlot>) => void;
   /** The "enable reminders?" card on /plan is shown once. */
@@ -44,6 +46,7 @@ export const useStore = create<State>()(
           const date = toISODate(new Date());
           return { today: { date, answers: { ...answersFor(s.today, date), [category]: answer } } };
         }),
+      clearToday: () => set({ today: null }),
       reminders: DEFAULT_REMINDERS,
       setReminder: (slot, patch) =>
         set((s) => ({ reminders: { ...s.reminders, [slot]: { ...s.reminders[slot], ...patch } } })),

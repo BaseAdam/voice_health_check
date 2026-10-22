@@ -11,8 +11,10 @@ import {
   type KeySource,
   type TestResult,
 } from '../src/api';
+import { answersFor } from '../src/domain/checkin';
 import { REMINDER_TIME_LABELS, type ReminderTime } from '../src/domain/recommendations';
 import { REMINDER_SLOTS, parseTime } from '../src/domain/reminders';
+import { toISODate } from '../src/format';
 import { scheduleTestReminder, useNotificationPermission } from '../src/reminders';
 import { speak, transcribe } from '../src/services/elevenlabs';
 import { MAX_RECORDING_SECONDS, useRecorder } from '../src/services/recorder';
@@ -177,6 +179,7 @@ export default function Settings() {
       </View>
 
       <Reminders />
+      <Testing />
 
       <Text style={text.muted}>
         Klucze są zapisywane w bezpiecznym magazynie urządzenia. Bez klucza w ustawieniach aplikacja
@@ -252,6 +255,31 @@ function Reminders() {
       </Text>
       <Button title="Przypomnienie testowe za 10 s" variant="secondary" onPress={test} />
       {testStatus ? <Text style={text.muted}>{testStatus}</Text> : null}
+    </View>
+  );
+}
+
+function Testing() {
+  const answered = useStore((s) => Object.keys(answersFor(s.today, toISODate(new Date()))).length);
+  const clearToday = useStore((s) => s.clearToday);
+  const [cleared, setCleared] = useState(false);
+
+  return (
+    <View style={styles.section}>
+      <Text style={text.heading}>Testowanie</Text>
+      <Text style={text.muted}>
+        Usuwa dzisiejsze odpowiedzi z check-inu. Następny check-in zapyta o wszystkie nawyki od nowa.
+      </Text>
+      <Button
+        title="Wyczyść dzisiejsze odpowiedzi"
+        variant="danger"
+        disabled={answered === 0}
+        onPress={() => {
+          clearToday();
+          setCleared(true);
+        }}
+      />
+      {cleared && answered === 0 ? <Text style={text.muted}>Wyczyszczono dzisiejsze odpowiedzi.</Text> : null}
     </View>
   );
 }
