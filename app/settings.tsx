@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Linking, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import {
   KEY_LABELS,
   deleteKey,
@@ -17,6 +17,7 @@ import { scheduleTestReminder, useNotificationPermission } from '../src/reminder
 import { speak, transcribe } from '../src/services/elevenlabs';
 import { MAX_RECORDING_SECONDS, useRecorder } from '../src/services/recorder';
 import { useStore } from '../src/store';
+import { Button, colors, layout, text } from '../src/ui';
 
 type Provider = 'elevenlabs' | 'groq';
 
@@ -80,10 +81,10 @@ export default function Settings() {
       const uri = await recorder.start(); // resolves when recording stops
       if (!uri) return;
       setVoicePhase('transcribing');
-      const text = await transcribe(uri);
-      setTranscript(text);
+      const recognized = await transcribe(uri);
+      setTranscript(recognized);
       setVoicePhase('speaking');
-      await speak(text);
+      await speak(recognized);
     } catch (e) {
       setVoiceError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -94,23 +95,23 @@ export default function Settings() {
   const field = (name: KeyName) => {
     const { value, source } = keys[name];
     return (
-      <View style={{ gap: 6 }}>
-        <Text style={{ fontWeight: '600' }}>{KEY_LABELS[name]}</Text>
-        <Text>
-          Aktualny: {value ? (SECRET[name] ? mask(value) : value) : '—'} (źródło:{' '}
-          {SOURCE_LABELS[source]})
+      <View style={styles.field}>
+        <Text style={styles.label}>{KEY_LABELS[name]}</Text>
+        <Text style={text.muted}>
+          Aktualny: {value ? (SECRET[name] ? mask(value) : value) : '—'} (źródło: {SOURCE_LABELS[source]})
         </Text>
         <TextInput
           accessibilityLabel={KEY_LABELS[name]}
           value={drafts[name]}
-          onChangeText={(text) => setDrafts((d) => ({ ...d, [name]: text }))}
+          onChangeText={(input) => setDrafts((d) => ({ ...d, [name]: input }))}
           placeholder={SECRET[name] ? 'Wklej nowy klucz' : 'Wpisz nowe ID głosu'}
+          placeholderTextColor={colors.muted}
           secureTextEntry={SECRET[name]}
           autoCapitalize="none"
           autoCorrect={false}
-          style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 6, padding: 10 }}
+          style={layout.input}
         />
-        {source === 'settings' && <Button title="Usuń" onPress={() => remove(name)} />}
+        {source === 'settings' && <Button title="Usuń" variant="danger" onPress={() => remove(name)} />}
       </View>
     );
   };
@@ -118,68 +119,72 @@ export default function Settings() {
   const testButton = (provider: Provider) => {
     const result = tests[provider];
     return (
-      <View style={{ gap: 6 }}>
+      <View style={styles.field}>
         <Button
           title="Testuj połączenie"
+          variant="secondary"
           onPress={() => test(provider)}
           disabled={result === 'pending'}
         />
-        {result === 'pending' && <Text>Testuję…</Text>}
+        {result === 'pending' && <Text style={text.muted}>Testuję…</Text>}
         {result && result !== 'pending' && (
-          <Text style={{ color: result.ok ? '#1a7f37' : '#c62828' }}>{result.message}</Text>
+          <Text style={result.ok ? styles.ok : text.error}>{result.message}</Text>
         )}
       </View>
     );
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 24, gap: 20 }} keyboardShouldPersistTaps="handled">
-      <Text style={{ fontSize: 18, fontWeight: '600' }}>ElevenLabs</Text>
-      {field('elevenlabs')}
-      {field('voiceId')}
-      {testButton('elevenlabs')}
+    <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+      <View style={styles.section}>
+        <Text style={text.heading}>ElevenLabs</Text>
+        {field('elevenlabs')}
+        {field('voiceId')}
+        {testButton('elevenlabs')}
+      </View>
 
-      <Text style={{ fontSize: 18, fontWeight: '600' }}>Groq</Text>
-      {field('groq')}
-      {testButton('groq')}
+      <View style={styles.section}>
+        <Text style={text.heading}>Groq</Text>
+        {field('groq')}
+        {testButton('groq')}
+      </View>
 
-      <Button title="Zapisz" onPress={save} disabled={filled.length === 0} />
-      {saveStatus !== '' && <Text>{saveStatus}</Text>}
-      <Text style={{ fontSize: 18, fontWeight: '600' }}>Test głosu</Text>
-      <Text style={{ color: '#666' }}>
-        Nagraj krótkie zdanie (max {MAX_RECORDING_SECONDS} s) – aplikacja je rozpozna i przeczyta na
-        głos. Używa zapisanych kluczy.
-      </Text>
-      {recorder.isRecording ? (
-        <Button title="Zatrzymaj nagrywanie" onPress={recorder.stop} />
-      ) : (
-        <Button title="Nagraj" onPress={voiceTest} disabled={voicePhase !== 'idle'} />
-      )}
-      {recorder.isRecording ? <Text>Nagrywam…</Text> : null}
-      {voicePhase === 'transcribing' ? <Text>Rozpoznaję…</Text> : null}
-      {transcript ? <Text>Rozpoznano: {transcript}</Text> : null}
-      {voicePhase === 'speaking' ? <Text>Czytam na głos…</Text> : null}
-      {voiceError ? <Text style={{ color: '#c62828' }}>{voiceError}</Text> : null}
-      {recorder.permissionDenied ? (
-        <View style={{ gap: 6 }}>
-          <Text style={{ color: '#c62828' }}>
-            Brak dostępu do mikrofonu. Włącz go w ustawieniach systemu.
-          </Text>
-          <Button title="Otwórz ustawienia" onPress={() => Linking.openSettings()} />
-        </View>
-      ) : null}
+      <Button title="Zapisz klucze" onPress={save} disabled={filled.length === 0} />
+      {saveStatus !== '' && <Text style={text.muted}>{saveStatus}</Text>}
+
+      <View style={styles.section}>
+        <Text style={text.heading}>Test głosu</Text>
+        <Text style={text.muted}>
+          Nagraj krótkie zdanie (max {MAX_RECORDING_SECONDS} s) – aplikacja je rozpozna i przeczyta na
+          głos. Używa zapisanych kluczy.
+        </Text>
+        {recorder.isRecording ? (
+          <Button title="Zatrzymaj nagrywanie" variant="secondary" onPress={recorder.stop} />
+        ) : (
+          <Button title="Nagraj" variant="secondary" onPress={voiceTest} disabled={voicePhase !== 'idle'} />
+        )}
+        {recorder.isRecording ? <Text style={styles.recording}>Nagrywam…</Text> : null}
+        {voicePhase === 'transcribing' ? <Text style={text.muted}>Rozpoznaję…</Text> : null}
+        {transcript ? <Text style={text.body}>Rozpoznano: {transcript}</Text> : null}
+        {voicePhase === 'speaking' ? <Text style={text.muted}>Czytam na głos…</Text> : null}
+        {voiceError ? <Text style={text.error}>{voiceError}</Text> : null}
+        {recorder.permissionDenied ? (
+          <>
+            <Text style={text.error}>Brak dostępu do mikrofonu. Włącz go w ustawieniach systemu.</Text>
+            <Button title="Otwórz ustawienia" variant="secondary" onPress={() => Linking.openSettings()} />
+          </>
+        ) : null}
+      </View>
 
       <Reminders />
 
-      <Text style={{ color: '#666' }}>
-        Klucze są zapisywane w bezpiecznym magazynie urządzenia. Bez klucza w ustawieniach
-        aplikacja używa wartości z .env (tylko do developmentu).
+      <Text style={text.muted}>
+        Klucze są zapisywane w bezpiecznym magazynie urządzenia. Bez klucza w ustawieniach aplikacja
+        używa wartości z .env (tylko do developmentu).
       </Text>
     </ScrollView>
   );
 }
-
-const inputStyle = { borderWidth: 1, borderRadius: 6, padding: 10, width: 80 } as const;
 
 function Reminders() {
   const reminders = useStore((s) => s.reminders);
@@ -193,9 +198,9 @@ function Reminders() {
   const [testStatus, setTestStatus] = useState('');
   const invalid = REMINDER_SLOTS.some((slot) => !parseTime(drafts[slot]));
 
-  function editTime(slot: ReminderTime, text: string) {
-    setDrafts((d) => ({ ...d, [slot]: text }));
-    if (parseTime(text)) setReminder(slot, { time: text.trim() });
+  function editTime(slot: ReminderTime, input: string) {
+    setDrafts((d) => ({ ...d, [slot]: input }));
+    if (parseTime(input)) setReminder(slot, { time: input.trim() });
   }
 
   async function test() {
@@ -205,46 +210,61 @@ function Reminders() {
   }
 
   return (
-    <View style={{ gap: 12 }}>
-      <Text style={{ fontSize: 18, fontWeight: '600' }}>Przypomnienia</Text>
+    <View style={styles.section}>
+      <Text style={text.heading}>Przypomnienia</Text>
       {granted === false ? (
-        <Button title="Włącz powiadomienia" onPress={async () => setDenied(!(await enable()))} />
+        <Button
+          title="Włącz powiadomienia"
+          variant="secondary"
+          onPress={async () => setDenied(!(await enable()))}
+        />
       ) : null}
       {denied && !granted ? (
-        <View style={{ gap: 6 }}>
-          <Text style={{ color: '#c62828' }}>
-            Brak zgody na powiadomienia. Włącz je w ustawieniach systemu.
-          </Text>
-          <Button title="Otwórz ustawienia" onPress={() => Linking.openSettings()} />
-        </View>
+        <>
+          <Text style={text.error}>Brak zgody na powiadomienia. Włącz je w ustawieniach systemu.</Text>
+          <Button title="Otwórz ustawienia" variant="secondary" onPress={() => Linking.openSettings()} />
+        </>
       ) : null}
       {REMINDER_SLOTS.map((slot) => (
-        <View key={slot} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Text style={{ flex: 1, textTransform: 'capitalize' }}>{REMINDER_TIME_LABELS[slot]}</Text>
+        <View key={slot} style={styles.slot}>
+          <Text style={[text.body, styles.slotLabel]}>{REMINDER_TIME_LABELS[slot]}</Text>
           <TextInput
             accessibilityLabel={`Godzina przypomnienia: ${REMINDER_TIME_LABELS[slot]}`}
             value={drafts[slot]}
-            onChangeText={(text) => editTime(slot, text)}
+            onChangeText={(input) => editTime(slot, input)}
             placeholder="GG:MM"
+            placeholderTextColor={colors.muted}
             keyboardType="numbers-and-punctuation"
-            style={{ ...inputStyle, borderColor: parseTime(drafts[slot]) ? '#ccc' : '#c62828' }}
+            style={[layout.input, styles.time, !parseTime(drafts[slot]) && styles.invalid]}
           />
           <Switch
             accessibilityLabel={`Przypomnienie: ${REMINDER_TIME_LABELS[slot]}`}
             value={reminders[slot].enabled}
             onValueChange={(enabled) => setReminder(slot, { enabled })}
+            trackColor={{ true: colors.beet, false: colors.line }}
           />
         </View>
       ))}
-      {invalid ? (
-        <Text style={{ color: '#c62828' }}>Wpisz godzinę w formacie GG:MM, na przykład 9:30.</Text>
-      ) : null}
-      <Text style={{ color: '#666' }}>
+      {invalid ? <Text style={text.error}>Wpisz godzinę w formacie GG:MM, na przykład 9:30.</Text> : null}
+      <Text style={text.muted}>
         Przypomnienie dotyczy nawyku, którego jeszcze nie odhaczono. Gdy wszystko jest odhaczone, nie
         pojawia się.
       </Text>
-      <Button title="Przypomnienie testowe za 10 s" onPress={test} />
-      {testStatus ? <Text>{testStatus}</Text> : null}
+      <Button title="Przypomnienie testowe za 10 s" variant="secondary" onPress={test} />
+      {testStatus ? <Text style={text.muted}>{testStatus}</Text> : null}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { padding: 20, gap: 20 },
+  section: { ...layout.card, gap: 14 },
+  field: { gap: 8 },
+  label: { fontSize: 17, fontWeight: '600', color: colors.ink },
+  ok: { fontSize: 15, lineHeight: 21, color: colors.leaf },
+  recording: { fontSize: 15, fontWeight: '600', color: colors.signal },
+  slot: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  slotLabel: { flex: 1, textTransform: 'capitalize' },
+  time: { width: 88, textAlign: 'center' },
+  invalid: { borderColor: colors.signal },
+});

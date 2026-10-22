@@ -1,17 +1,26 @@
-import { Link, router, useFocusEffect } from 'expo-router';
+import { Link, router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { AppState, Button, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { answersFor, type YesNo } from '../src/domain/checkin';
 import { evaluate } from '../src/domain/evaluate';
 import { planReminders } from '../src/domain/reminders';
 import { formatWhen, toISODate } from '../src/format';
 import { useNotificationPermission } from '../src/reminders';
 import { useStore } from '../src/store';
+import { ActionBar, Button, colors, layout, text } from '../src/ui';
 
-const MARKS: Record<YesNo, { mark: string; spoken: string }> = {
-  yes: { mark: '✓', spoken: 'zrobione' },
-  no: { mark: '✗', spoken: 'jeszcze nie' },
+const MARKS: Record<YesNo, { mark: string; spoken: string; color: string }> = {
+  yes: { mark: '✓', spoken: 'zrobione', color: colors.leaf },
+  no: { mark: '✗', spoken: 'jeszcze nie', color: colors.muted },
 };
+
+type MenuItem = { href: Href; label: string };
+const MENU: MenuItem[] = [
+  { href: '/plan', label: 'Twój plan' },
+  { href: '/results', label: 'Edytuj wyniki' },
+  { href: '/summary', label: 'Podsumowanie dnia' },
+  { href: '/settings', label: 'Ustawienia' },
+];
 
 /** Current time, refreshed when the screen regains focus or the app comes back (e.g. the next morning). */
 function useNow() {
@@ -26,6 +35,26 @@ function useNow() {
   return now;
 }
 
+function NavList({ items }: { items: MenuItem[] }) {
+  return (
+    <View style={styles.list}>
+      {/* Not <Link asChild>: its Slot spreads `style`, which drops Pressable's style function. */}
+      {items.map((item, i) => (
+        <Pressable
+          key={item.label}
+          accessibilityRole="link"
+          accessibilityLabel={item.label}
+          onPress={() => router.push(item.href)}
+          style={({ pressed }) => [styles.row, i > 0 && styles.divider, pressed && styles.pressed]}
+        >
+          <Text style={[text.body, styles.grow]}>{item.label}</Text>
+          <Text style={styles.chevron}>›</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 export default function Today() {
   const results = useStore((s) => s.results);
   const today = useStore((s) => s.today);
@@ -35,10 +64,17 @@ export default function Today() {
 
   if (!results) {
     return (
-      <View style={styles.screen}>
-        <Text>Wpisz wyniki badań – na ich podstawie aplikacja ułoży codzienne nawyki.</Text>
-        <Button title="Wpisz wyniki" onPress={() => router.push('/results')} />
-        <Link href="/settings">Ustawienia</Link>
+      <View style={layout.screen}>
+        <ScrollView contentContainerStyle={layout.content}>
+          <Text style={text.title}>Zacznij od wyników badań</Text>
+          <Text style={text.body}>
+            Na ich podstawie aplikacja ułoży codzienne nawyki i będzie o nie pytać głosem.
+          </Text>
+          <NavList items={MENU.slice(-1)} />
+        </ScrollView>
+        <ActionBar>
+          <Button title="Wpisz wyniki" onPress={() => router.push('/results')} />
+        </ActionBar>
       </View>
     );
   }
@@ -48,53 +84,64 @@ export default function Today() {
   const next = planReminders(habits, answers, reminders, now)[0];
 
   return (
-    <ScrollView contentContainerStyle={styles.screen}>
-      <Text style={styles.heading}>Nawyki na dziś</Text>
-      {habits.length === 0 ? (
-        <Text>Wszystkie podane wyniki są w normie – nie ma nawyków do sprawdzania.</Text>
-      ) : (
-        habits.map((h) => {
-          const answer = answers[h.category];
-          return (
-            <View
-              key={h.category}
-              style={styles.row}
-              accessible
-              accessibilityLabel={`${h.label}: ${answer ? MARKS[answer].spoken : 'jeszcze nie pytano'}`}
-            >
-              <Text style={styles.mark}>{answer ? MARKS[answer].mark : '–'}</Text>
-              <Text style={styles.label}>{h.label}</Text>
-              {answer ? null : <Text style={styles.muted}>jeszcze nie pytano</Text>}
-            </View>
-          );
-        })
-      )}
+    <View style={layout.screen}>
+      <ScrollView contentContainerStyle={layout.content}>
+        <Text style={text.heading}>Nawyki na dziś</Text>
+        {habits.length === 0 ? (
+          <Text style={text.body}>Wszystkie podane wyniki są w normie – nie ma nawyków do sprawdzania.</Text>
+        ) : (
+          <View style={styles.list}>
+            {habits.map((h, i) => {
+              const answer = answers[h.category];
+              return (
+                <View
+                  key={h.category}
+                  style={[styles.row, i > 0 && styles.divider]}
+                  accessible
+                  accessibilityLabel={`${h.label}: ${answer ? MARKS[answer].spoken : 'jeszcze nie pytano'}`}
+                >
+                  <Text style={[styles.mark, { color: answer ? MARKS[answer].color : colors.muted }]}>
+                    {answer ? MARKS[answer].mark : '–'}
+                  </Text>
+                  <Text style={[text.body, styles.grow]}>{h.label}</Text>
+                  {answer ? null : <Text style={text.muted}>jeszcze nie pytano</Text>}
+                </View>
+              );
+            })}
+          </View>
+        )}
 
-      {habits.length > 0 && granted === false ? (
-        <Text style={styles.muted}>
-          Przypomnienia są wyłączone. <Link href="/settings">Włącz w ustawieniach</Link>
-        </Text>
-      ) : null}
-      {habits.length > 0 && granted ? (
-        <Text style={styles.muted}>
-          {next ? `Następne przypomnienie: ${formatWhen(next.date, now)}` : 'Brak zaplanowanych przypomnień.'}
-        </Text>
-      ) : null}
-      {habits.length > 0 ? <Button title="Check-in teraz" onPress={() => router.push('/checkin')} /> : null}
+        {habits.length > 0 && granted === false ? (
+          <Text style={text.muted}>
+            Przypomnienia są wyłączone.{' '}
+            <Link href="/settings" style={text.link}>
+              Włącz w ustawieniach
+            </Link>
+          </Text>
+        ) : null}
+        {habits.length > 0 && granted ? (
+          <Text style={text.muted}>
+            {next ? `Następne przypomnienie: ${formatWhen(next.date, now)}` : 'Brak zaplanowanych przypomnień.'}
+          </Text>
+        ) : null}
 
-      <Link href="/plan">Twój plan</Link>
-      <Link href="/results">Edytuj wyniki</Link>
-      <Link href="/summary">Podsumowanie dnia</Link>
-      <Link href="/settings">Ustawienia</Link>
-    </ScrollView>
+        <NavList items={MENU} />
+      </ScrollView>
+      {habits.length > 0 ? (
+        <ActionBar>
+          <Button title="Check-in teraz" onPress={() => router.push('/checkin')} />
+        </ActionBar>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { padding: 24, gap: 16 },
-  heading: { fontSize: 18, fontWeight: '600' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 6, backgroundColor: '#f2f2f2' },
-  mark: { fontSize: 18, width: 20, textAlign: 'center' },
-  label: { flex: 1 },
-  muted: { color: '#666' },
+  list: { backgroundColor: colors.card, borderRadius: 16, paddingHorizontal: 16 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, paddingVertical: 12 },
+  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
+  pressed: { opacity: 0.6 },
+  grow: { flex: 1 },
+  mark: { fontSize: 20, fontWeight: '700', width: 22, textAlign: 'center' },
+  chevron: { fontSize: 24, color: colors.muted },
 });

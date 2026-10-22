@@ -29,6 +29,8 @@ automatyczne wykrywanie końca mowy.
   udostępniamy tylko przez git, nigdy jako spakowany folder; do recenzji klucze wpisujemy w Ustawieniach, `.env` pusty.
 - UI i głos po polsku, pytania w formie neutralnej płciowo („Czy udało Ci się dziś…”).
 - Prostota ponad abstrakcje. Stan: jeden store zustand + persist. Notka liczona z wyników, nie przechowywana.
+- Wygląd: kolory, typografia i przyciski tylko z `src/ui.tsx` (paleta „Burak i szałwia”); jedna główna akcja na ekran
+  w `ActionBar` na dole, systemowego `Button` z react-native nie używamy.
 
 ## Gotchas
 - iOS: przy `allowsRecording: true` odtwarzanie leci przez słuchawkę rozmowną – `setAudioModeAsync({ allowsRecording: true })`
@@ -56,6 +58,8 @@ automatyczne wykrywanie końca mowy.
   kończą się „Unable to resolve react-native-web”.
 - Jest: `expo-audio` nie ma mocka w jest-expo – w testach importujących go `jest.mock('expo-audio', () => ({}))`.
 - TypeScript 6: domyślnie `types: []` – globalne typy (np. jest) trzeba dopisać w `tsconfig.json` → `compilerOptions.types`.
+- `<Link asChild>` (Radix Slot) scala `style` przez spread – funkcyjny styl `Pressable` znika, tablica rzuca błąd.
+  Wiersze nawigacji = `Pressable` + `router.push`. RN 0.86 nie ma `StyleSheet.absoluteFillObject` (`inset: 0`).
 
 ## Struktura
 ```
@@ -76,6 +80,7 @@ src/domain/checkin.ts          teksty check-inu (potwierdzenia, dopytanie, podsu
 src/domain/reminders.ts        planReminders(): pory × 7 dni, treść z nieodhaczonego nawyku, nic gdy wszystko odhaczone
 src/checkin.ts      reducer maszyny stanów check-inu (czysty TS, `step` odrzuca spóźnione wyniki async)
 src/format.ts       parsowanie/formatowanie liczb (przecinek), zakresów i dat
+src/ui.tsx          tokeny kolorów i tekstu, Button (primary/secondary/quiet/danger), ActionBar, Disclaimer
 src/store.ts        zustand + persist (wyniki badań, tylko zmienione normy, odpowiedzi z DZIŚ, ustawienia przypomnień;
                     NIE klucze API)
 src/api.ts          klucze (secure-store/.env, useApiKeys()), testy połączenia

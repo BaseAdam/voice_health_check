@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Button, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { CustomRanges, Results } from '../src/domain/evaluate';
 import { MARKERS, type Marker, type MarkerId, type Range, type Sex } from '../src/domain/markers';
 import { formatDecimal, isValidTestDate, parseDecimal, toISODate } from '../src/format';
 import { useStore } from '../src/store';
+import { ActionBar, Button, colors, layout, text } from '../src/ui';
 
 type RangeDraft = { min: string; max: string };
 
@@ -106,109 +107,121 @@ export default function ResultsScreen() {
   }
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.screen}
-      keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
-    >
-      <Button title="Wczytaj dane demo" onPress={loadDemo} />
+    <View style={layout.screen}>
+      <ScrollView
+        contentContainerStyle={styles.screen}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
+        <Button title="Wczytaj dane demo" variant="secondary" onPress={loadDemo} />
 
-      <View style={styles.field}>
-        <Text style={styles.label}>Płeć</Text>
-        <View style={styles.row} accessibilityRole="radiogroup">
-          {(['female', 'male'] as const).map((s) => (
-            <Pressable
-              key={s}
-              onPress={() => setSex(s)}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: sex === s }}
-              style={[styles.chip, sex === s && styles.chipActive]}
-            >
-              <Text style={sex === s ? styles.chipActiveText : undefined}>{SEX_LABELS[s]}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Data badania</Text>
-        <TextInput
-          accessibilityLabel="Data badania"
-          value={testDate}
-          onChangeText={setTestDate}
-          placeholder="RRRR-MM-DD"
-          keyboardType="numbers-and-punctuation"
-          style={styles.input}
-        />
-        {dateError ? <Text style={styles.error}>{dateError}</Text> : null}
-      </View>
-
-      {MARKERS.map((m) => {
-        const range = shownRange(m);
-        const error = markerError(m);
-        return (
-          <View key={m.id} style={styles.field}>
-            <Text style={styles.label}>{m.name}</Text>
-            <View style={styles.row}>
-              <TextInput
-                accessibilityLabel={`${m.name}, wynik w ${m.unit}`}
-                value={values[m.id]}
-                onChangeText={(text) => setValues((v) => ({ ...v, [m.id]: text }))}
-                placeholder="wynik"
-                keyboardType="decimal-pad"
-                style={[styles.input, styles.grow]}
-              />
-              <Text>{m.unit}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text>Norma:</Text>
-              <TextInput
-                accessibilityLabel={`${m.name}, dolna granica normy`}
-                value={range.min}
-                onChangeText={(text) => editRange(m, 'min', text)}
-                placeholder="min"
-                keyboardType="decimal-pad"
-                style={[styles.input, styles.bound]}
-              />
-              <Text>–</Text>
-              <TextInput
-                accessibilityLabel={`${m.name}, górna granica normy`}
-                value={range.max}
-                onChangeText={(text) => editRange(m, 'max', text)}
-                placeholder="max"
-                keyboardType="decimal-pad"
-                style={[styles.input, styles.bound]}
-              />
-            </View>
-            {ranges[m.id] ? (
-              <Button title="Przywróć domyślną normę" onPress={() => resetRange(m.id)} />
-            ) : null}
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+        <View style={styles.field}>
+          <Text style={styles.label}>Płeć</Text>
+          <View style={styles.row} accessibilityRole="radiogroup">
+            {(['female', 'male'] as const).map((s) => (
+              <Pressable
+                key={s}
+                onPress={() => setSex(s)}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: sex === s }}
+                style={[styles.chip, sex === s && styles.chipActive]}
+              >
+                <Text style={[text.body, sex === s && styles.chipActiveText]}>{SEX_LABELS[s]}</Text>
+              </Pressable>
+            ))}
           </View>
-        );
-      })}
+        </View>
 
-      <Text style={styles.muted}>
-        Domyślne normy dotyczą dorosłych i różnią się między laboratoriami – wpisz normę z wyniku
-        badania.
-      </Text>
-      <Button title="Zapisz i pokaż plan" onPress={save} disabled={blocker !== undefined} />
-      {blocker ? <Text style={styles.muted}>{blocker}</Text> : null}
-    </ScrollView>
+        <View style={styles.field}>
+          <Text style={styles.label}>Data badania</Text>
+          <TextInput
+            accessibilityLabel="Data badania"
+            value={testDate}
+            onChangeText={setTestDate}
+            placeholder="RRRR-MM-DD"
+            keyboardType="numbers-and-punctuation"
+            style={styles.input}
+          />
+          {dateError ? <Text style={styles.error}>{dateError}</Text> : null}
+        </View>
+
+        {MARKERS.map((m) => {
+          const range = shownRange(m);
+          const error = markerError(m);
+          return (
+            <View key={m.id} style={styles.field}>
+              <Text style={styles.label}>{m.name}</Text>
+              <View style={styles.row}>
+                <TextInput
+                  accessibilityLabel={`${m.name}, wynik w ${m.unit}`}
+                  value={values[m.id]}
+                  onChangeText={(text) => setValues((v) => ({ ...v, [m.id]: text }))}
+                  placeholder="wynik"
+                  keyboardType="decimal-pad"
+                  style={[styles.input, styles.grow]}
+                />
+                <Text style={text.muted}>{m.unit}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={text.muted}>Norma:</Text>
+                <TextInput
+                  accessibilityLabel={`${m.name}, dolna granica normy`}
+                  value={range.min}
+                  onChangeText={(text) => editRange(m, 'min', text)}
+                  placeholder="min"
+                  keyboardType="decimal-pad"
+                  style={[styles.input, styles.bound]}
+                />
+                <Text style={text.muted}>–</Text>
+                <TextInput
+                  accessibilityLabel={`${m.name}, górna granica normy`}
+                  value={range.max}
+                  onChangeText={(text) => editRange(m, 'max', text)}
+                  placeholder="max"
+                  keyboardType="decimal-pad"
+                  style={[styles.input, styles.bound]}
+                />
+              </View>
+              {ranges[m.id] ? (
+                <Button title="Przywróć domyślną normę" variant="quiet" onPress={() => resetRange(m.id)} />
+              ) : null}
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+            </View>
+          );
+        })}
+
+        <Text style={styles.muted}>
+          Domyślne normy dotyczą dorosłych i różnią się między laboratoriami – wpisz normę z wyniku
+          badania.
+        </Text>
+      </ScrollView>
+      <ActionBar>
+        {blocker ? <Text style={text.muted}>{blocker}</Text> : null}
+        <Button title="Zapisz i pokaż plan" onPress={save} disabled={blocker !== undefined} />
+      </ActionBar>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { padding: 24, gap: 20 },
-  field: { gap: 6 },
-  label: { fontWeight: '600' },
+  screen: { padding: 20, gap: 20 },
+  field: { gap: 8 },
+  label: { fontSize: 17, fontWeight: '600', color: colors.ink },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 6, padding: 10 },
+  input: layout.input,
   grow: { flex: 1 },
-  bound: { width: 80 },
-  chip: { borderWidth: 1, borderColor: '#999', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16 },
-  chipActive: { backgroundColor: '#1a5fb4', borderColor: '#1a5fb4' },
-  chipActiveText: { color: 'white' },
-  error: { color: '#c62828' },
-  muted: { color: '#666' },
+  bound: { width: 88 },
+  chip: {
+    minHeight: 44,
+    justifyContent: 'center',
+    borderRadius: 22,
+    paddingHorizontal: 20,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  chipActive: { backgroundColor: colors.beet, borderColor: colors.beet },
+  chipActiveText: { color: colors.onBeet, fontWeight: '600' },
+  error: text.error,
+  muted: text.muted,
 });
